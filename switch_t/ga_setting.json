@@ -1,5 +1,5 @@
 {
-    "max_generations": 200,
+    "max_generations": 1000,
     "population_num": 24,
     "offspring_num": 12,
     "mutation_chance": 0.1,
@@ -9,7 +9,7 @@
     "turns": [12, 24, 36, 48, 60],
     "board_size": 8,
     "matches": 250,
-    "threshold": 80,
+    "threshold": 85,
     "random_opening": 6,
     "processes": 2
 }

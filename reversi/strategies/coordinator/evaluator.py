@@ -192,6 +192,29 @@ class Evaluator_PW(AbstractEvaluator):
         return score_p
 
 
+class Evaluator_TW(AbstractEvaluator):
+    """
+    盤面の評価値をTable+勝敗で算出
+    """
+    def __init__(self, size=8, corner=50, c=-20, a1=0, a2=-1, b=-1, x=-25, o=-5, ww=10000):
+        self.t = Evaluator_T(size, corner, c, a1, a2, b, x, o)
+        self.w = Evaluator_W(ww)
+
+    def evaluate(self, *args, **kwargs):
+        """
+        評価値の算出
+        """
+        score_w = self.w.evaluate(*args, **kwargs)
+
+        # 勝敗が決まっている場合
+        if score_w is not None:
+            return score_w
+
+        score_t = self.t.evaluate(*args, **kwargs)
+
+        return score_t
+
+
 class Evaluator_TPW(AbstractEvaluator):
     """
     盤面の評価値をTable+配置可能数+勝敗で算出

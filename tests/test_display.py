@@ -6,14 +6,14 @@ from test.support import captured_stdout
 
 from reversi.board import Board
 from reversi.player import Player
-from reversi.display import ConsoleDisplay
+from reversi.display import ConsoleDisplay, NoneDisplay, WindowDisplay
 from reversi.strategies import ConsoleUserInput
 
 
 class TestDisplay(unittest.TestCase):
     """display
     """
-    def test_console_progress(self):
+    def test_console_display(self):
         board8x8 = Board()
 
         class Test():
@@ -69,3 +69,142 @@ class TestDisplay(unittest.TestCase):
             self.assertEqual(lines[29], "〇Test foul")
             self.assertEqual(lines[30], "〇Test win")
             self.assertEqual(lines[31], "draw")
+
+    def test_none_display(self):
+        board8x8 = Board()
+
+        class Test():
+            def next_move(self, disc, board):
+                return (3, 2)
+
+        black_player = Player('black', 'Test', Test())
+        white_player = Player('white', 'User', ConsoleUserInput())
+
+        display = NoneDisplay()
+
+        with captured_stdout() as stdout:
+            display.progress(board8x8, black_player, white_player)
+            legal_moves = board8x8.get_legal_moves('black')
+            display.turn(black_player, legal_moves)
+            black_player.put_disc(board8x8)
+            display.move(black_player, legal_moves)
+            display.progress(board8x8, black_player, white_player)
+            display.foul(black_player)
+            display.win(black_player)
+            display.draw()
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, [])
+
+    def test_window_display(self):
+        class TestInfo:
+            def set_text(self, color, text1, text2):
+                print('set_text', color, text1, text2)
+
+            def set_turn_text_on(self, color):
+                print('set_turn_text_on', color)
+
+            def set_turn_text_off(self, color):
+                print('set_turn_text_off', color)
+
+            def set_move_text_on(self, color, x, y):
+                print('set_move_text_on', color, x, y)
+
+            def set_move_text_off(self, color):
+                print('set_move_text_off', color)
+
+            def set_foul_text_on(self, player):
+                print('set_foul_text_on', player)
+
+            def set_win_text_on(self, player):
+                print('set_win_text_on', player)
+
+            def set_lose_text_on(self, player):
+                print('set_lose_text_on', player)
+
+            def set_draw_text_on(self, player):
+                print('set_draw_text_on', player)
+
+        class TestBoard:
+            def enable_move(self, x, y):
+                print('enable_move', x, y)
+
+            def disable_move(self, x, y):
+                print('disable_move', x, y)
+
+            def enable_moves(self, legal_moves):
+                print('enable_moves', legal_moves)
+
+            def disable_moves(self, legal_moves):
+                print('disable_moves', legal_moves)
+
+            def put_disc(self, color, x, y):
+                print('put_disc', color, x, y)
+
+            def turn_disc(self, color, captures):
+                print('turn_disc', color, captures)
+
+        class TestWindow:
+            info = TestInfo()
+            board = TestBoard()
+
+        display = WindowDisplay(TestWindow())
+
+        # init
+        self.assertTrue(isinstance(display.info, TestInfo))
+        self.assertTrue(isinstance(display.board, TestBoard))
+
+        # progress
+        with captured_stdout() as stdout:
+            display.progress(Board(), None, None)
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, ['set_text black score 2', 'set_text white score 2'])
+
+        # turn
+        with captured_stdout() as stdout:
+            display.turn(Player('black', 'TestPlayer', None), Board().get_legal_moves('black', force=True))
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, ['set_turn_text_on black', 'enable_moves {(3, 2): [(3, 3)], (2, 3): [(3, 3)], (5, 4): [(4, 4)], (4, 5): [(4, 4)]}'])
+
+        # move
+        player = Player('black', 'TestPlayer', None)
+        player.move = (5, 4)
+        player.captures = [(4, 4)]
+        legal_moves = Board().get_legal_moves('black', force=True)
+        with captured_stdout() as stdout:
+            display.move(player, legal_moves)
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, [
+                'set_turn_text_off black',
+                'set_move_text_off black',
+                'set_turn_text_off white',
+                'set_move_text_off white',
+                'disable_moves {(3, 2): [(3, 3)], (2, 3): [(3, 3)], (5, 4): [(4, 4)], (4, 5): [(4, 4)]}',
+                'enable_move 5 4',
+                'put_disc black 5 4',
+                'set_move_text_on black f 5',
+                'turn_disc black [(4, 4)]',
+                'disable_move 5 4',
+            ])
+
+        # foul
+        with captured_stdout() as stdout:
+            display.foul(Player('black', 'TestPlayer', None))
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, ['set_foul_text_on black'])
+
+        # win
+        with captured_stdout() as stdout:
+            display.win(Player('black', 'TestPlayer', None))
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, ['set_win_text_on black', 'set_lose_text_on white'])
+
+        with captured_stdout() as stdout:
+            display.win(Player('white', 'TestPlayer', None))
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, ['set_win_text_on white', 'set_lose_text_on black'])
+
+        # draw
+        with captured_stdout() as stdout:
+            display.draw()
+            lines = stdout.getvalue().splitlines()
+            self.assertEqual(lines, ['set_draw_text_on black', 'set_draw_text_on white'])

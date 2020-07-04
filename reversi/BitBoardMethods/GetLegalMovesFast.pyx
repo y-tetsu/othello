@@ -1,22 +1,197 @@
-#!/usr/bin/env python
 #cython: language_level=3
-"""
-ビットボードの配置可能位置取得処理
+"""GetLegalMovesFast
 """
 
+import sys
+
+
+MAXSIZE64 = 2**63 - 1
+
+
 def get_legal_moves(color, size, b, w, mask):
-    """
-    石が置ける場所をすべて返す
+    """get_legal_moves
+           return all legal moves
     """
     if size == 8:
+        if sys.maxsize == MAXSIZE64:
+            return _get_legal_moves_size8_64bit(color, b, w)
+
         return _get_legal_moves_size8(color, b, w)
 
     return _get_legal_moves(color, size, b, w, mask)
 
 
-cdef _get_legal_moves_size8(color, b, w):
+cdef _get_legal_moves_size8_64bit(color, unsigned long long b, unsigned long long w):
+    """_get_legal_moves_size8_64bit
     """
-    石が置ける場所をすべて返す(ボードサイズ8限定)
+    cdef:
+        unsigned long long player, opponent
+
+    player, opponent = (b, w) if color == 'black' else (w, b)
+
+    cdef:
+        unsigned long long blank = ~(player | opponent)
+        unsigned long long horizontal = opponent & 0x7E7E7E7E7E7E7E7E  # horizontal mask value
+        unsigned long long vertical = opponent & 0x00FFFFFFFFFFFF00    # vertical mask value
+        unsigned long long diagonal = opponent & 0x007E7E7E7E7E7E00    # diagonal mask value
+        unsigned long long tmp, legal_moves = 0
+
+    # left
+    tmp = horizontal & (player << 1)
+    tmp |= horizontal & (tmp << 1)
+    tmp |= horizontal & (tmp << 1)
+    tmp |= horizontal & (tmp << 1)
+    tmp |= horizontal & (tmp << 1)
+    tmp |= horizontal & (tmp << 1)
+    legal_moves |= blank & (tmp << 1)
+
+    # right
+    tmp = horizontal & (player >> 1)
+    tmp |= horizontal & (tmp >> 1)
+    tmp |= horizontal & (tmp >> 1)
+    tmp |= horizontal & (tmp >> 1)
+    tmp |= horizontal & (tmp >> 1)
+    tmp |= horizontal & (tmp >> 1)
+    legal_moves |= blank & (tmp >> 1)
+
+    # top
+    tmp = vertical & (player << 8)
+    tmp |= vertical & (tmp << 8)
+    tmp |= vertical & (tmp << 8)
+    tmp |= vertical & (tmp << 8)
+    tmp |= vertical & (tmp << 8)
+    tmp |= vertical & (tmp << 8)
+    legal_moves |= blank & (tmp << 8)
+
+    # bottom
+    tmp = vertical & (player >> 8)
+    tmp |= vertical & (tmp >> 8)
+    tmp |= vertical & (tmp >> 8)
+    tmp |= vertical & (tmp >> 8)
+    tmp |= vertical & (tmp >> 8)
+    tmp |= vertical & (tmp >> 8)
+    legal_moves |= blank & (tmp >> 8)
+
+    # left-top
+    tmp = diagonal & (player << 9)
+    tmp |= diagonal & (tmp << 9)
+    tmp |= diagonal & (tmp << 9)
+    tmp |= diagonal & (tmp << 9)
+    tmp |= diagonal & (tmp << 9)
+    tmp |= diagonal & (tmp << 9)
+    legal_moves |= blank & (tmp << 9)
+
+    # left-bottom
+    tmp = diagonal & (player >> 7)
+    tmp |= diagonal & (tmp >> 7)
+    tmp |= diagonal & (tmp >> 7)
+    tmp |= diagonal & (tmp >> 7)
+    tmp |= diagonal & (tmp >> 7)
+    tmp |= diagonal & (tmp >> 7)
+    legal_moves |= blank & (tmp >> 7)
+
+    # right-top
+    tmp = diagonal & (player << 7)
+    tmp |= diagonal & (tmp << 7)
+    tmp |= diagonal & (tmp << 7)
+    tmp |= diagonal & (tmp << 7)
+    tmp |= diagonal & (tmp << 7)
+    tmp |= diagonal & (tmp << 7)
+    legal_moves |= blank & (tmp << 7)
+
+    # right-bottom
+    tmp = diagonal & (player >> 9)
+    tmp |= diagonal & (tmp >> 9)
+    tmp |= diagonal & (tmp >> 9)
+    tmp |= diagonal & (tmp >> 9)
+    tmp |= diagonal & (tmp >> 9)
+    tmp |= diagonal & (tmp >> 9)
+    legal_moves |= blank & (tmp >> 9)
+
+    # prepare result
+    cdef:
+        unsigned int x, y
+        unsigned long long mask = 0x8000000000000000
+    ret = {}
+    for y in range(8):
+        for x in range(8):
+            if legal_moves & mask:
+                ret[(x, y)] = _get_flippable_discs_size8_64bit(player, opponent, x, y)
+            mask >>= 1
+
+    return ret
+
+
+cdef _get_flippable_discs_size8_64bit(unsigned long long player, unsigned long long opponent, unsigned int x, unsigned int y):
+    """_get_flippable_discs_size8_64bit
+    """
+    cdef:
+        unsigned int direction1, direction2
+        unsigned long long buff, next_put
+        unsigned long long move = 0
+        unsigned long long flippable_discs = 0
+
+    move = <unsigned long long>1 << (63-(y*8+x))
+
+    for direction1 in range(8):
+        buff = 0
+        next_put = _get_next_put_size8_64bit(move, direction1)
+
+        # get discs of consecutive opponents
+        for direction2 in range(8):
+            if next_put & opponent:
+                buff |= next_put
+                next_put = _get_next_put_size8_64bit(next_put, direction1)
+            else:
+                break
+
+        # store result if surrounded by own disc
+        if next_put & player:
+            flippable_discs |= buff
+
+    # prepare result
+    cdef:
+        unsigned long long mask = 0x8000000000000000
+    ret = []
+    for y in range(8):
+        for x in range(8):
+            if flippable_discs & mask:
+                ret += [(x, y)]
+            mask >>= 1
+
+    return ret
+
+
+cdef inline unsigned long long _get_next_put_size8_64bit(unsigned long long put, unsigned int direction):
+    """_get_next_put_size8_64bit
+    """
+    cdef:
+        unsigned long long next_put
+
+    if direction == 0:
+        next_put = 0xFFFFFFFFFFFFFF00 & (put << 8)  # top
+    elif direction == 1:
+        next_put = 0x7F7F7F7F7F7F7F00 & (put << 7)  # right-top
+    elif direction == 2:
+        next_put = 0x7F7F7F7F7F7F7F7F & (put >> 1)  # right
+    elif direction == 3:
+        next_put = 0x007F7F7F7F7F7F7F & (put >> 9)  # right-bottom
+    elif direction == 4:
+        next_put = 0x00FFFFFFFFFFFFFF & (put >> 8)  # bottom
+    elif direction == 5:
+        next_put = 0x00FEFEFEFEFEFEFE & (put >> 7)  # left-bottom
+    elif direction == 6:
+        next_put = 0xFEFEFEFEFEFEFEFE & (put << 1)  # left
+    elif direction == 7:
+        next_put = 0xFEFEFEFEFEFEFE00 & (put << 9)  # left-top
+    else:
+        next_put = 0                                # unexpected
+
+    return next_put
+
+
+cdef _get_legal_moves_size8(color, b, w):
+    """_get_legal_moves_size8
     """
     # 前準備
     player, opponent = (b, w) if color == 'black' else (w, b)  # プレイヤーと相手を決定
@@ -177,8 +352,7 @@ cdef _get_legal_moves_size8(color, b, w):
 
 
 cdef _get_flippable_discs_size8(unsigned int p0, unsigned int p1, unsigned int o0, unsigned int o1, unsigned int x, unsigned int y):
-    """
-    指定座標のひっくり返せる石の場所をすべて返す(サイズ8限定)
+    """_get_flippable_discs_size8
     """
     cdef:
         unsigned int direction, next0, next1, buff0, buff1
@@ -234,8 +408,8 @@ cdef _get_flippable_discs_size8(unsigned int p0, unsigned int p1, unsigned int o
 
 
 cdef _get_next_put_size8(unsigned int put0, unsigned int put1, unsigned int direction):
-    """
-    指定位置から指定方向に1マス分移動した場所を返す(ボードサイズ8限定)
+    """_get_next_put_size8
+           指定位置から指定方向に1マス分移動した場所を返す(ボードサイズ8限定)
     """
     cdef:
         unsigned int upper, lower
@@ -271,8 +445,7 @@ cdef _get_next_put_size8(unsigned int put0, unsigned int put1, unsigned int dire
 
 
 cdef _get_legal_moves(color, size, b, w, mask):
-    """
-    石が置ける場所をすべて返す(ボードサイズ8以外)
+    """_get_legal_moves
     """
     ret = {}
 
@@ -307,8 +480,7 @@ cdef _get_legal_moves(color, size, b, w, mask):
 
 
 cdef _get_flippable_discs(size, player, opponent, x, y, mask):
-    """
-    指定座標のひっくり返せる石の場所をすべて返す(サイズ8以外)
+    """_get_flippable_discs
     """
     ret = []
     flippable_discs = 0
@@ -342,8 +514,8 @@ cdef _get_flippable_discs(size, player, opponent, x, y, mask):
 
 
 cdef _get_next_put(size, put, direction, mask):
-    """
-    指定位置から指定方向に1マス分移動した場所を返す(ボードサイズ8以外)
+    """_get_next_put
+           指定位置から指定方向に1マス分移動した場所を返す(ボードサイズ8以外)
     """
     if direction == 'U':     # 上
         return (put << size) & mask.u
@@ -366,8 +538,8 @@ cdef _get_next_put(size, put, direction, mask):
 
 
 cdef _get_legal_moves_lshift(size, mask, player, blank, shift_size):
-    """
-    左シフトで石が置ける場所を取得
+    """_get_legal_moves_lshift
+           左シフトで石が置ける場所を取得
     """
     tmp = mask & (player << shift_size)
     for _ in range(size-3):
@@ -376,8 +548,8 @@ cdef _get_legal_moves_lshift(size, mask, player, blank, shift_size):
 
 
 cdef _get_legal_moves_rshift(size, mask, player, blank, shift_size):
-    """
-    右シフトで石が置ける場所を取得
+    """_get_legal_moves_rshift
+           右シフトで石が置ける場所を取得
     """
     tmp = mask & (player >> shift_size)
     for _ in range(size-3):
@@ -386,8 +558,8 @@ cdef _get_legal_moves_rshift(size, mask, player, blank, shift_size):
 
 
 cdef _print_bitboard(bitboard):
-    """
-    ビットボード表示用
+    """_print_bitboard
+           ビットボード表示用
     """
     mask = 0x8000000000000000
     for y in range(8):
@@ -401,8 +573,8 @@ cdef _print_bitboard(bitboard):
 
 
 cdef _print_bitboard_half(bitboard):
-    """
-    ビットボード表示用
+    """_print_bitboard_half
+           ビットボード表示用
     """
     mask = 0x80000000
     for y in range(4):

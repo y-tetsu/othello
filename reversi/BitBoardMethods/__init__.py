@@ -4,6 +4,8 @@ pyximport.install()
 
 SLOW_MODE1 = True
 SLOW_MODE2 = True
+SLOW_MODE3 = True
+SLOW_MODE4 = True
 
 try:
     from reversi.BitBoardMethods.GetLegalMovesFast import get_legal_moves
@@ -16,3 +18,15 @@ try:
     SLOW_MODE2 = False
 except ImportError:
     from reversi.BitBoardMethods.GetBoardInfo import get_board_info
+
+try:
+    from reversi.BitBoardMethods.UndoFast import undo
+    SLOW_MODE3 = False
+except ImportError:
+    from reversi.BitBoardMethods.Undo import undo
+
+try:
+    from reversi.BitBoardMethods.PutDiscFast import put_disc
+    SLOW_MODE4 = False
+except ImportError:
+    from reversi.BitBoardMethods.PutDisc import put_disc

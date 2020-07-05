@@ -87,12 +87,18 @@ class Board(AbstractBoard):
 
         return header + body
 
-    def get_legal_moves(self, color, force=False):
+    def get_legal_moves(self, color, cache=False):
+        """get_legal_moves
+
+        Args:
+            color : player's color
+            cache : True if cache use
+
+        Returns:
+            legal_moves
         """
-        石が置ける場所をすべて返す
-        """
-        # キャッシュが存在する場合
-        if not force and color in self._legal_moves_cache:
+        # if cache option is True and cache available, return cache
+        if cache and color in self._legal_moves_cache:
             return self._legal_moves_cache[color]
 
         self._legal_moves_cache.clear()
@@ -177,7 +183,7 @@ class Board(AbstractBoard):
         """
         指定座標に石を置いて返せる場所をひっくり返し、取れた石の座標を返す
         """
-        legal_moves = self.get_legal_moves(color)
+        legal_moves = self.get_legal_moves(color, cache=True)
 
         if (x, y) in legal_moves:
             self._board[y][x] = self.disc[color]  # 指定座標に指定した色の石を置く
@@ -338,12 +344,18 @@ class BitBoard(AbstractBoard):
 
         return header + body
 
-    def get_legal_moves(self, color, force=False):
+    def get_legal_moves(self, color, cache=False):
+        """get_legal_moves
+
+        Args:
+            color : player's color
+            cache : True if cache use
+
+        Returns:
+            legal_moves
         """
-        石が置ける場所をすべて返す
-        """
-        # キャッシュが存在する場合
-        if not force and color in self._legal_moves_cache:
+        # if cache option is True and cache available, return cache
+        if cache and color in self._legal_moves_cache:
             return self._legal_moves_cache[color]
 
         self._legal_moves_cache.clear()
@@ -357,69 +369,19 @@ class BitBoard(AbstractBoard):
         """
         指定座標に石を置いて返せる場所をひっくり返し、取れた石の座標を返す
         """
-        legal_moves = self.get_legal_moves(color)
-
-        if (x, y) in legal_moves:
-            # 配置位置を整数に変換
-            size = self.size
-            put = 1 << ((size*size-1)-(y*size+x))
-
-            # 反転位置を整数に変換
-            reversibles_list = legal_moves[(x, y)]
-            flippable_discs = 0
-            for tmp_x, tmp_y in reversibles_list:
-                flippable_discs |= 1 << ((size*size-1)-(tmp_y*size+tmp_x))
-
-            # 自分の石を置いて相手の石をひっくり返す
-            if color == 'black':
-                self._black_bitboard ^= put | flippable_discs
-                self._white_bitboard ^= flippable_discs
-                self.score['black'] += 1 + len(reversibles_list)
-                self.score['white'] -= len(reversibles_list)
-            else:
-                self._white_bitboard ^= put | flippable_discs
-                self._black_bitboard ^= flippable_discs
-                self.score['black'] -= len(reversibles_list)
-                self.score['white'] += 1 + len(reversibles_list)
-
-            # 打った手の記録
-            self.prev.append({'color': color, 'x': x, 'y': y, 'flippable_discs': flippable_discs, 'disc_num': len(reversibles_list)})
-
-            return reversibles_list
-
-        return []
+        return BitBoardMethods.put_disc(self, color, x, y)
 
     def get_board_info(self):
         """
         ボードの情報を返す
         """
-
         return BitBoardMethods.get_board_info(self.size, self._black_bitboard, self._white_bitboard)
 
     def undo(self):
         """
         やり直し
         """
-        prev = self.prev.pop()
-
-        if prev:
-            size = self.size
-            flippable_discs, disc_num = prev['flippable_discs'], prev['disc_num']
-
-            put = 1 << ((size*size-1)-(prev['y']*size+prev['x']))
-
-            if prev['color'] == 'black':
-                self._black_bitboard ^= put | flippable_discs
-                self._white_bitboard ^= flippable_discs
-                self.score['black'] -= 1 + disc_num
-                self.score['white'] += disc_num
-            else:
-                self._white_bitboard ^= put | flippable_discs
-                self._black_bitboard ^= flippable_discs
-                self.score['black'] += disc_num
-                self.score['white'] -= 1 + disc_num
-
-        self._legal_moves_cache.clear()
+        BitBoardMethods.undo(self)
 
     def get_bitboard_info(self):
         """

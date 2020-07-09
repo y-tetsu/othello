@@ -31,7 +31,9 @@ class _NegaMax(AbstractStrategy):
         moves, max_score = {}, self._MIN
 
         # 打てる手の中から評価値の最も高い手を選ぶ
-        for move in board.get_legal_moves(color, cache=True).keys():
+        legal_moves = board.get_legal_moves(color, cache=True)
+        for move in legal_moves.keys():
+            board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)                              # 一手打つ
             score = -self.get_score(next_color, board, self.depth-1)  # 評価値を取得
             board.undo()                                              # 打った手を戻す
@@ -71,8 +73,8 @@ class _NegaMax(AbstractStrategy):
 
         # 評価値を算出
         max_score = self._MIN
-
         for move in legal_moves.keys():
+            board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)
             score = -self.get_score(next_color, board, depth-1)
             board.undo()
@@ -150,81 +152,3 @@ class NegaMax4_TPOW(NegaMax):
     """
     def __init__(self, depth=4, evaluator=Evaluator_TPOW()):
         super().__init__(depth, evaluator)
-
-
-if __name__ == '__main__':
-    import time
-    import os
-    from board import BitBoard
-
-    bitboard8 = BitBoard(8)
-    bitboard8.put_disc('black', 3, 2)
-
-    print('--- Test For NegaMax Strategy ---')
-    negamax = NegaMax3_TPOW()
-    assert negamax.depth == 3
-
-    key = negamax.__class__.__name__ + str(os.getpid())
-
-    Measure.count[key] = 0
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + CPU_TIME
-    score = negamax.get_score('white', bitboard8, 2)
-    print(score)
-    assert score == -10.75
-    assert Measure.count[key] == 18
-
-    Measure.count[key] = 0
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + CPU_TIME
-    score = negamax.get_score('white', bitboard8, 3)
-    print(score)
-    assert score == 6.25
-    assert Measure.count[key] == 79
-
-    Measure.count[key] = 0
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + CPU_TIME
-    score = negamax.get_score('white', bitboard8, 4)
-    print(score)
-    assert score == -8.25
-    assert Measure.count[key] == 428
-
-    Measure.count[key] = 0
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + 5
-    score = negamax.get_score('white', bitboard8, 5)
-    print(score)
-    assert score == 4
-    assert Measure.count[key] == 2478
-
-    Measure.count[key] = 0
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + 10
-    score = negamax.get_score('white', bitboard8, 6)
-    print(score)
-    assert score == -3.5
-    assert Measure.count[key] == 16251
-
-    print(bitboard8)
-    assert negamax.next_move('white', bitboard8) == (2, 4)
-
-    bitboard8.put_disc('white', 2, 4)
-    bitboard8.put_disc('black', 5, 5)
-    bitboard8.put_disc('white', 4, 2)
-    bitboard8.put_disc('black', 5, 2)
-    bitboard8.put_disc('white', 5, 4)
-    print(bitboard8)
-
-    Measure.count[key] = 0
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + 5
-    assert negamax.next_move('black', bitboard8) == (2, 2)
-    assert Measure.count[key] == 575
-
-    Measure.count[key] = 0
-    negamax.depth = 2
-    Timer.timeout_flag[key] = False
-    Timer.deadline[key] = time.time() + 2
-    assert negamax.next_move('black', bitboard8) == (4, 5)
-    assert Measure.count[key] == 70

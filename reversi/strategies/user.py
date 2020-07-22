@@ -3,9 +3,6 @@
 ユーザ入力
 """
 
-import sys
-sys.path.append('../')
-
 import re
 import time
 
@@ -23,7 +20,7 @@ class ConsoleUserInput(AbstractStrategy):
         """
         次の一手
         """
-        legal_moves = list(board.get_legal_moves(color, cache=True).keys())
+        legal_moves = board.get_legal_moves(color, cache=True)
         select = None
 
         while True:
@@ -55,7 +52,7 @@ class WindowUserInput(AbstractStrategy):
         """
         次の一手
         """
-        moves = list(board.get_legal_moves(color, cache=True).keys())
+        moves = board.get_legal_moves(color, cache=True)
         self.window.board.selectable_moves(moves)
 
         while True:

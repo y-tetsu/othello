@@ -7,6 +7,8 @@
 **reversi**はPythonで使えるリバーシ(オセロ)のライブラリです。<br>
 手軽にリバーシAIをプログラミングして遊ぶ事ができます。<br>
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+[![Build Status](https://travis-ci.org/y-tetsu/reversi.svg?branch=master)](https://travis-ci.org/y-tetsu/reversi)
+[![codecov](https://codecov.io/gh/y-tetsu/reversi/branch/master/graph/badge.svg)](https://codecov.io/gh/y-tetsu/reversi)
 <br>
 
 ## ダウンロード
@@ -21,7 +23,7 @@
 - [Python 3.7.6](https://www.python.org/downloads/release/python-376/)<br>
     - cython 0.29.15<br>
     - pyinstaller 3.6<br>
-- [Microsoft Visual C++ 2019](https://visualstudio.microsoft.com/downloads/?utm_medium=microsoft&utm_source=docs.microsoft.com&utm_campaign=button+cta&utm_content=download+vs2019+rc)(When developing)<br>
+- [Microsoft Visual C++ 2019](https://visualstudio.microsoft.com/downloads/?utm_medium=microsoft&utm_source=docs.microsoft.com&utm_campaign=button+cta&utm_content=download+vs2019+rc)(開発時に使用)<br>
 
 ## インストール方法
 1. [Python 3.7.6](https://www.python.org/downloads/release/python-376/)をインストールしてください。<br>
@@ -48,7 +50,7 @@ $ install_reversi_examples
 - [02_console_app.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/02_console_app.py) - コンソール上で遊ぶアプリケーション
 - [03_create_exe.bat](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/03_create_exe.bat) - GUIアプリケーションのexeファイルを作成するバッチファイル
 - [04_reversi_simulator.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/04_reversi_simulator.py) - AI同士を対戦させて結果を表示するシミュレータ
-- [05_easy_strategy.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/05_easy_strategy.py) - 単純な戦略のAIを実装するサンプル
+- [05_manual_strategy.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/05_manual_strategy.py) - 自作したAIを実装するサンプル
 - [06_table_strategy.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/06_table_strategy.py) - テーブルによる重みづけで手を選ぶAIを実装するサンプル
 - [07_minmax_strategy.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/07_minmax_strategy.py) - MinMax法で手を選ぶAIを実装するサンプル
 - [08_alphabeta_strategy.py](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/08_alphabeta_strategy.py) - AlphaBeta法で手を選ぶAIを実装するサンプル
@@ -61,7 +63,7 @@ $ py -3.7 01_tkinter_app.py
 $ py -3.7 02_console_app.py
 $ 03_create_exe.bat
 $ py -3.7 04_reversi_simulator.py
-$ py -3.7 05_easy_strategy.py
+$ py -3.7 05_manual_strategy.py
 $ py -3.7 06_table_strategy.py
 $ py -3.7 07_minmax_strategy.py
 $ py -3.7 08_alphabeta_strategy.py
@@ -76,8 +78,281 @@ $ py -3.7 09_genetic_algorithm.py
 #### 04_reversi_simulator.py
 [<img src="https://raw.githubusercontent.com/y-tetsu/reversi/images/simulator_demo.gif" width="650px">](https://github.com/y-tetsu/reversi/blob/master/reversi/examples/04_reversi_simulator.py)
 
+
+
+## 使い方
+本ライブラリの使い方を、コーディング例を元に説明します。
+
+
+### アプリケーションの起動
+まず最初に、リバーシのGUIアプリケーションの起動方法を示します。
+
+Pythonコード内で`reversi`ライブラリより`Reversi`クラスをインポートしてください。
+`Reversi`クラスのインスタンスを作成し、`start`メソッドを呼び出すとアプリケーションが起動します。
+
+```Python
+from reversi import Reversi
+
+Reversi().start()
+```
+上記のコードを実行すると、アプリケーションが起動しそのまま遊ぶ事ができます。
+ただしこの場合、選択できるプレイヤーはユーザ操作のみとなります。
+
+
+### アプリケーションにAIを追加する
+次はアプリケーションにAIを追加する方法を示します。
+
+`Reversi`クラスのインスタンス作成時の引数に、辞書(`dict`)型のAIプレイヤーの情報を指定することで、
+自動でリバーシをプレイするAIプレイヤーを追加することができます。(以後、"プレイヤー情報"と呼びます)
+
+"プレイヤー情報"は、キーに"AIプレイヤーの名前"(任意)、値に"AI戦略クラスのオブジェクト"、としたペアの情報を集めたものとなります。
+
+```Python
+{
+    'AIプレイヤー名1': AI戦略クラスのオブジェクト1,
+    'AIプレイヤー名2': AI戦略クラスのオブジェクト2,
+    'AIプレイヤー名3': AI戦略クラスのオブジェクト3,
+}
+```
+
+ライブラリにあらかじめ組み込まれている、ランダムな手を打つ`Random`戦略と、
+常にできるだけ多く取ろうとする`Greedy`戦略を、アプリケーションに追加する例を下記に示します。
+
+組み込みのAI戦略は、すべて`reversi.strategies`よりインポートすることができます。
+
+```Python
+from reversi import Reversi
+from reversi.strategies import Random, Greedy
+
+Reversi(
+    {
+        'RANDOM': Random(),
+        'GREEDY': Greedy(),
+    }
+).start()
+```
+上記を実行すると、ユーザ操作に加えて"RANDOM"と"GREEDY"をプレイヤーとして選択できるようになります。
+
+
+### AI戦略を自作する
+続いて、本ライブラリを使って、独自のAIを自作しアプリケーションに追加する方法を示します。
+
+
+#### 戦略クラスの作り方
+まず、`reversi.strategy`より`AbstractStrategy`をインポートしてください。
+次に、`AbstractStrategy`を継承した任意の名前のクラスを作成してください。
+このクラスに`next_move`という、"次の一手"を打つためのメソッドを実装してください。
+
+```Python
+from reversi.strategies import AbstractStrategy
+
+class OriginalAI(AbstractStrategy):
+    def next_move(self, color, board):
+        move = ### 次の一手 ###
+
+        return move
+```
+
+このようにすることで、AI戦略クラスが完成します。
+
+`next_move`メソッドは下記の、`color`変数と`board`オブジェクトを引数として受け取ります。
+
+ |引数|説明|
+ |:---|:---|
+ |`color`変数|`black`か`white`の`str`型の文字列が入り、それぞれ黒番か白番かを判別することができます。|
+ |`board`オブジェクト|リバーシの盤面情報を持ったオブジェクトです。黒と白の石の配置情報の他、リバーシのゲームを進行するために必要となる、パラメータやメソッドを持っています。|
+
+`next_move`の戻り値には、手番と盤面の情報を元に"次に打つ手の座標"を指定してください。
+座標を決定する方法が、自作の必要な部分となります。
+
+なお、座標は盤面左上を(0, 0)とした時の(x, y)のタプルとしてください。
+盤面サイズが8の場合の各マス目の座標を下図に示します。
+
+![coordinate](https://raw.githubusercontent.com/y-tetsu/reversi/images/coordinate.png)
+
+`board`オブジェクトについてはここでは簡単のため、
+石が置ける位置を取得する`get_legal_moves`メソッドと、盤面のサイズを取得する`size`パラメータの、2つのみを取り上げます。
+
+
+#### 石が置ける位置の取得方法
+ある盤面の石が置ける位置(座標)は`board`オブジェクトの`get_legal_moves`メソッドで取得できます。
+`get_legal_moves`呼び出し時の引数には、黒か白のどちらかの手番(`color`変数)を与えてください。
+
+```Python
+legal_moves = board.get_legal_moves(color)
+```
+
+`get_legal_moves`の戻り値"石が置ける座標のリスト"となっております。
+
+初期状態(盤面サイズ8)での黒手番の結果は下記のとおりです。
+
+```
+[(3, 2), (2, 3), (5, 4), (4, 5)]
+```
+
+#### 盤面のサイズ
+本アプリケーションは、盤面のサイズとして4～26までの偶数が選べる仕様となっております。
+必要に応じて、いずれの場合でも動作するよう盤面のサイズを考慮するようにしてください。
+
+盤面のサイズは下記で取得できます。
+
+```Python
+size = board.size
+```
+
+#### 「角が取れる時は必ず取る」戦略の実装
+それでは、AIの作成例として4角が取れる時は必ず取り、
+そうでない時はランダムに打つ、`Corner`という戦略(プレイヤー名は"CORNER"とします)を実装する例を示します。
+
+```Python
+import random
+
+from reversi import Reversi
+from reversi.strategies import AbstractStrategy
+
+class Corner(AbstractStrategy):
+    def next_move(self, color, board):
+        size = board.size
+        legal_moves = board.get_legal_moves(color)
+        for corner in [(0, 0), (0, size-1), (size-1, 0), (size-1, size-1)]:
+            if corner in legal_moves:
+                return corner
+
+        return random.choice(legal_moves)
+
+Reversi({'CORNER': Corner()}).start()
+```
+
+上記を実行すると、対戦プレイヤーに"CORNER"が選択可能となります。
+実際に対戦してみると、角が取れる時に必ず取ってくることが分かると思います。
+
+### AI対戦をシミュレートする
+本ライブラリのシミュレータを使うと、AI対戦をシミュレートし結果を確認することができます。
+ここではシミュレータの使い方を示します。
+
+シミュレータを使う場合は、下記のように`Simulator`クラスをインポートしてください。
+
+```Python
+from reversi import Simulator
+```
+
+シミュレータの実行例として、
+これまでに登場した"RANDOM"、"GREEDY"、"CORNER"を総当たりで対戦させ、結果を表示するまでを示します。
+
+#### シミュレータの実行
+シミュレータは必ずメインモジュール(\_\_main\_\_)内で実行するようにしてください。
+Simulatorをインスタンス化する際の引数には"プレイヤー情報"と"設定ファイル名"の2つが必要となります。
+
+"プレイヤー情報"はアプリケーションの起動で指定したものと同様です。
+また、シミュレータの設定ファイルについては後述します。
+
+下記のとおり、シミュレータオブジェクトから`start`メソッドを呼ぶとシミュレーションを開始します。
+
+```Python
+if __name__ == '__main__':
+    simulator = Simulator(
+        {
+            'RANDOM': Random(),
+            'GREEDY': Greedy(),
+            'CORNER': Corner(),
+        },
+        './simulator_setting.json',
+    )
+    simulator.start()
+```
+
+#### シミュレータの設定ファイル
+シミュレータの設定ファイル(JSON形式)の作成例は下記のとおりです。
+Simulatorの第二引数に、本ファイル名(任意。上記例では`./simulator_setting.json`)を指定してください。
+
+```JSON
+{
+    "board_size": 8,
+    "board_type": "bitboard",
+    "matches": 100,
+    "processes": 1,
+    "random_opening": 0,
+    "characters": [
+        "RANDOM",
+        "GREEDY",
+        "CORNER"
+    ]
+}
+```
+
+ |パラメータ名|説明|
+ |:---|:---|
+ |board_size|盤面のサイズを指定してください。|
+ |board_type|盤面の種類(board または bitboard)を選択してください。bitboardの方が高速で通常は変更不要です。|
+ |matches|AI同士の対戦回数を指定してください。100を指定した場合、AIの各組み合わせにつき先手と後手で100試合ずつ対戦する動作となります。|
+ |processes|並列実行数を指定してください。AI同士の対戦組み合わせ別に並列実行します。お使いのPCのコア数に合わせて必要に応じて設定してください。|
+ |random_opening|対戦開始からランダムに打つ手数を指定してください。指定された手数まではランダムに試合を進行します。不要な場合は0を指定してください。|
+ |characters|対戦させたいAI名をリストアップして下さい。指定する場合は第一引数の"プレイヤー情報"に含まれるものの中から選択してください。省略すると第一引数の"プレイヤー情報"と同一と扱います。リストアップされた全てのAI同士の総当たり戦を行います。|
+
+#### 実行結果
+シミュレーション結果はシミュレータオブジェクトを`print`することで確認できます。
+
+```Python
+print(simulator)
+```
+
+#### 実行例
+ライブラリ組み込みのAI戦略を用いたプレイヤー"RANDOM"、"GREEDY"と、
+自作のAI戦略による"CORNER"の、それぞれを対戦させるようシミュレータを実行して、
+結果を出力するまでのコード例を下記に示します。
+
+```Python
+import random
+
+from reversi import Simulator
+from reversi.strategies import AbstractStrategy, Random, Greedy
+
+class Corner(AbstractStrategy):
+    def next_move(self, color, board):
+        size = board.size
+        legal_moves = board.get_legal_moves(color)
+        for corner in [(0, 0), (0, size-1), (size-1, 0), (size-1, size-1)]:
+            if corner in legal_moves:
+                return corner
+
+        return random.choice(legal_moves)
+
+if __name__ == '__main__':
+    simulator = Simulator(
+        {
+            'RANDOM': Random(),
+            'GREEDY': Greedy(),
+            'CORNER': Corner(),
+        },
+        './simulator_setting.json',
+    )
+    simulator.start()
+
+    print(simulator)
+```
+
+"RANDOM"、"GREEDY"、"CORNER"を総当たりで、先手/後手それぞれ100回ずつ対戦したところ、下記の結果になりました。
+```
+Size : 8
+                          | RANDOM                    GREEDY                    CORNER
+---------------------------------------------------------------------------------------------------------
+RANDOM                    | ------                     32.5%                     21.5%
+GREEDY                    |  66.0%                    ------                     29.5%
+CORNER                    |  76.0%                     68.5%                    ------
+---------------------------------------------------------------------------------------------------------
+
+                          | Total  | Win   Lose  Draw  Match
+------------------------------------------------------------
+RANDOM                    |  27.0% |   108   284     8   400
+GREEDY                    |  47.8% |   191   202     7   400
+CORNER                    |  72.2% |   289   102     9   400
+------------------------------------------------------------
+```
+
+ランダムに打つよりも毎回多めに取る方が、さらにそれよりも角は必ず取る方が、より有利になりそうだという結果が得られました。
+
 ---
-## GUIアプリケーションの説明
+## GUIアプリケーション(01_tkinter_app.py)の説明
 ### メニュー一覧
 選択可能なメニューの一覧です。<br>
 

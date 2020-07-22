@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-"""
-アプリケーション
+"""Application
 """
 
 import sys
@@ -22,19 +20,19 @@ class Reversi:
     """
     INIT, DEMO, PLAY, END, REINIT = 'INIT', 'DEMO', 'PLAY', 'END', 'REINIT'
 
-    def __init__(self, s={}):
+    def __init__(self, players_info={}):
         root = tk.Tk()
         root.withdraw()  # 表示が整うまで隠す
 
         self.state = Reversi.INIT
 
-        b = ['User1'] + list(s.keys())
-        w = ['User2'] + list(s.keys())
+        b = ['User1'] + list(players_info.keys())
+        w = ['User2'] + list(players_info.keys())
         self.window = Window(root=root, black_players=b, white_players=w)
 
-        s['User1'] = strategies.WindowUserInput(self.window)
-        s['User2'] = strategies.WindowUserInput(self.window)
-        self.strategies = s
+        players_info['User1'] = strategies.WindowUserInput(self.window)
+        players_info['User2'] = strategies.WindowUserInput(self.window)
+        self.players_info = players_info
 
     @property
     def state(self):
@@ -122,11 +120,11 @@ class Reversi:
                         self.window.menu.menus[color].add_command(label=str(name), command=self.window.menu._command(color, name))
 
                 # 戦略を追加
-                if name not in self.strategies:
-                    self.strategies[name] = strategies.External(cmd, timeouttime)
+                if name not in self.players_info:
+                    self.players_info[name] = strategies.External(cmd, timeouttime)
                 else:
-                    self.strategies[name].cmd = cmd
-                    self.strategies[name].timeouttime = timeouttime
+                    self.players_info[name].cmd = cmd
+                    self.players_info[name].timeouttime = timeouttime
 
         else:
             self.error_message('指定された登録ファイルが見つかりませんでした')
@@ -208,7 +206,7 @@ class Reversi:
 
         for color in ('black', 'white'):
             name = self.window.player[color]
-            players[color] = Player(color, name, self.strategies[name])
+            players[color] = Player(color, name, self.players_info[name])
 
         # ウィンドウの設定をゲームに反映
         strategies.common.Timer.time_limit = self.window.cputime
@@ -267,17 +265,17 @@ class Reversic:
     """
     START, MENU, PLAY = 'START', 'MENU', 'PLAY'
 
-    def __init__(self, s={}):
+    def __init__(self, players_info={}):
         self.board_size = 8
         self.player_names = {'black': 'User1', 'white': 'User2'}
         self.state = Reversic.START
 
         b, w = {}, {}
         b['User1'] = strategies.ConsoleUserInput()
-        b.update(s)
+        b.update(players_info)
         w['User2'] = strategies.ConsoleUserInput()
-        w.update(s)
-        self.strategies = {'black': b, 'white': w}
+        w.update(players_info)
+        self.players_info = {'black': b, 'white': w}
 
     @property
     def state(self):
@@ -336,11 +334,11 @@ class Reversic:
                 self.state = Reversic.START
                 break
             elif user_in == 'b':
-                self.player_names['black'] = self._get_player(self.strategies['black'])
+                self.player_names['black'] = self._get_player(self.players_info['black'])
                 self.state = Reversic.START
                 break
             elif user_in == 'w':
-                self.player_names['white'] = self._get_player(self.strategies['white'])
+                self.player_names['white'] = self._get_player(self.players_info['white'])
                 self.state = Reversic.START
                 break
             elif user_in == 'q':
@@ -389,7 +387,7 @@ class Reversic:
 
         for color in ('black', 'white'):
             name = self.player_names[color]
-            selected_players[color] = Player(color, name, self.strategies[color][name])
+            selected_players[color] = Player(color, name, self.players_info[color][name])
 
         # ゲーム開始
         game = Game(board, selected_players['black'], selected_players['white'], ConsoleDisplay())

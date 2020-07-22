@@ -35,11 +35,11 @@ class TestGame(unittest.TestCase):
 
         class TopLeft(AbstractStrategy):
             def next_move(self, color, board):
-                return list(board.get_legal_moves(color).keys())[0]
+                return board.get_legal_moves(color)[0]
 
         class BottomRight(AbstractStrategy):
             def next_move(self, color, board):
-                return list(board.get_legal_moves(color).keys())[-1]
+                return board.get_legal_moves(color)[-1]
 
         class Foul(AbstractStrategy):
             def next_move(self, color, board):
@@ -60,45 +60,45 @@ class TestGame(unittest.TestCase):
 
         # init
         game1 = Game(Board(4), p1, p2, TestDisplay())
-        self.assertTrue(isinstance(game1.board, Board))
-        self.assertTrue(isinstance(game1.black_player.strategy, TopLeft))
-        self.assertTrue(isinstance(game1.white_player.strategy, BottomRight))
+        self.assertIsInstance(game1.board, Board)
+        self.assertIsInstance(game1.black_player.strategy, TopLeft)
+        self.assertIsInstance(game1.white_player.strategy, BottomRight)
         self.assertEqual(game1.black_player, game1.players[0])
         self.assertEqual(game1.white_player, game1.players[1])
         self.assertEqual(game1.cancel, None)
         self.assertEqual(game1.result, [])
 
         game2 = Game(Board(4), p1, p3, TestDisplay())
-        self.assertTrue(isinstance(game2.board, Board))
-        self.assertTrue(isinstance(game2.black_player.strategy, TopLeft))
-        self.assertTrue(isinstance(game2.white_player.strategy, TopLeft))
+        self.assertIsInstance(game2.board, Board)
+        self.assertIsInstance(game2.black_player.strategy, TopLeft)
+        self.assertIsInstance(game2.white_player.strategy, TopLeft)
         self.assertEqual(game2.black_player, game2.players[0])
         self.assertEqual(game2.white_player, game2.players[1])
         self.assertEqual(game2.cancel, None)
         self.assertEqual(game2.result, [])
 
         game3 = Game(Board(4), p1, p2, TestDisplay(), 'white', TestCancel())
-        self.assertTrue(isinstance(game3.board, Board))
-        self.assertTrue(isinstance(game3.black_player.strategy, TopLeft))
-        self.assertTrue(isinstance(game3.white_player.strategy, BottomRight))
+        self.assertIsInstance(game3.board, Board)
+        self.assertIsInstance(game3.black_player.strategy, TopLeft)
+        self.assertIsInstance(game3.white_player.strategy, BottomRight)
         self.assertEqual(game3.black_player, game3.players[1])
         self.assertEqual(game3.white_player, game3.players[0])
-        self.assertTrue(isinstance(game3.cancel, TestCancel))
+        self.assertTrue(game3.cancel, TestCancel)
         self.assertEqual(game3.result, [])
 
         game4 = Game(Board(4), p4, p2, TestDisplay())
-        self.assertTrue(isinstance(game4.board, Board))
-        self.assertTrue(isinstance(game4.black_player.strategy, Foul))
-        self.assertTrue(isinstance(game4.white_player.strategy, BottomRight))
+        self.assertIsInstance(game4.board, Board)
+        self.assertIsInstance(game4.black_player.strategy, Foul)
+        self.assertIsInstance(game4.white_player.strategy, BottomRight)
         self.assertEqual(game4.black_player, game4.players[0])
         self.assertEqual(game4.white_player, game4.players[1])
         self.assertEqual(game4.cancel, None)
         self.assertEqual(game4.result, [])
 
         game5 = Game(Board(4), p1, p5, TestDisplay())
-        self.assertTrue(isinstance(game5.board, Board))
-        self.assertTrue(isinstance(game5.black_player.strategy, TopLeft))
-        self.assertTrue(isinstance(game5.white_player.strategy, Foul))
+        self.assertIsInstance(game5.board, Board)
+        self.assertIsInstance(game5.black_player.strategy, TopLeft)
+        self.assertIsInstance(game5.white_player.strategy, Foul)
         self.assertEqual(game5.black_player, game5.players[0])
         self.assertEqual(game5.white_player, game5.players[1])
         self.assertEqual(game5.cancel, None)
@@ -406,7 +406,7 @@ class TestGame(unittest.TestCase):
                 '   a b c d',
                 ' 1□□□□',
                 ' 2□●〇□',
-                ' 3□〇●□',
+                ' 3□〇〇□',
                 ' 4□□□□',
                 ' 〇Foul ●BottomRight',
                 'display.foul 〇Foul',
@@ -416,8 +416,8 @@ class TestGame(unittest.TestCase):
             self.assertEqual(game4.result.winlose, Game.WHITE_WIN)
             self.assertEqual(game4.result.black_name, 'Foul')
             self.assertEqual(game4.result.white_name, 'BottomRight')
-            self.assertEqual(game4.result.black_num, 2)
-            self.assertEqual(game4.result.white_num, 2)
+            self.assertEqual(game4.result.black_num, 3)
+            self.assertEqual(game4.result.white_num, 1)
 
         # play-white-foul
         with captured_stdout() as stdout:

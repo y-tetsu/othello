@@ -1,13 +1,10 @@
 """MinMax
 """
 
-import sys
-sys.path.append('../')
-
 import random
 
 from reversi.strategies.common import Measure, AbstractStrategy
-from reversi.strategies.coordinator import Evaluator_T, Evaluator_TP, Evaluator_TPO, Evaluator_TPW, Evaluator_TPWE, Evaluator_TPWEC, Evaluator_TPOW, Evaluator_PWE
+from reversi.strategies.coordinator import Evaluator_T, Evaluator_TP, Evaluator_TPO, Evaluator_TPW, Evaluator_TPWE, Evaluator_TPWEC, Evaluator_TPOW, Evaluator_PWE  # noqa: E501
 
 
 class MinMax(AbstractStrategy):
@@ -29,7 +26,7 @@ class MinMax(AbstractStrategy):
         next_moves = {}
         best_score = self._MIN if color == 'black' else self._MAX
         legal_moves = board.get_legal_moves(color, cache=True)
-        for move in legal_moves.keys():
+        for move in legal_moves:
             board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)
             score = self.get_score(next_color, board, self.depth-1)
@@ -62,7 +59,7 @@ class MinMax(AbstractStrategy):
 
         # get best score
         best_score = self._MIN if color == 'black' else self._MAX
-        for move in legal_moves.keys():
+        for move in legal_moves:
             board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)
             score = self.get_score(next_color, board, depth-1)

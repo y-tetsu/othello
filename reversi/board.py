@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-"""
-ボードの管理
+"""Board
 """
 
 import abc
@@ -10,8 +8,8 @@ from reversi.disc import DiscFactory
 import reversi.BitBoardMethods as BitBoardMethods
 
 
-MIN_BOARD_SIZE = 4   # 最小ボードサイズ
-MAX_BOARD_SIZE = 26  # 最大ボードサイズ
+MIN_BOARD_SIZE = 4
+MAX_BOARD_SIZE = 26
 
 
 class AbstractBoard(metaclass=abc.ABCMeta):
@@ -20,11 +18,23 @@ class AbstractBoard(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
+    def get_flippable_discs(self, color, x, y):
+        pass
+
+    @abc.abstractmethod
     def put_disc(self, color, x, y):
         pass
 
     @abc.abstractmethod
+    def update_score(self):
+        pass
+
+    @abc.abstractmethod
     def get_board_info(self):
+        pass
+
+    @abc.abstractmethod
+    def get_bitboard_info(self):
         pass
 
     @abc.abstractmethod
@@ -33,18 +43,15 @@ class AbstractBoard(metaclass=abc.ABCMeta):
 
 
 class BoardSizeError(Exception):
-    """
-    ボードサイズのエラー
+    """BoardSizeError
     """
     pass
 
 
 class Board(AbstractBoard):
-    """
-    ボードを管理する
+    """Board
     """
     def __init__(self, size=8):
-        # ボードサイズの値チェック
         if not(MIN_BOARD_SIZE <= size <= MAX_BOARD_SIZE and size % 2 == 0):
             raise BoardSizeError(str(size) + ' is invalid size!')
 
@@ -76,12 +83,8 @@ class Board(AbstractBoard):
         self._legal_moves_cache = {}
 
     def __str__(self):
-        # 列の見出し
         header = '   ' + ' '.join([chr(97 + i) for i in range(self.size)]) + '\n'
-
-        # 行の見出し+盤面
         body = ''
-
         for num, row in enumerate(self._board, 1):
             body += f'{num:2d}' + ''.join([value for value in row]) + '\n'
 
@@ -95,34 +98,31 @@ class Board(AbstractBoard):
             cache : True if cache use
 
         Returns:
-            legal_moves
+            legal_moves list
         """
         # if cache option is True and cache available, return cache
         if cache and color in self._legal_moves_cache:
             return self._legal_moves_cache[color]
 
         self._legal_moves_cache.clear()
-        legal_moves = {}
+        legal_moves = []
 
         for y in range(self.size):
             for x in range(self.size):
-                flippable_discs = self._get_flippable_discs(color, x, y)
+                flippable_discs = self.get_flippable_discs(color, x, y)
 
                 if flippable_discs:
-                    legal_moves[(x, y)] = flippable_discs
+                    legal_moves.append((x, y))
 
         self._legal_moves_cache[color] = legal_moves
 
         return legal_moves
 
-    def _get_flippable_discs(self, color, x, y):
+    def get_flippable_discs(self, color, x, y):
+        """get_flippable_discs
+
+               指定座標のひっくり返せる石の場所をすべて返す
         """
-        指定座標のひっくり返せる石の場所をすべて返す
-        """
-        # 方向
-        # (-1,  1) (0,  1) (1,  1)
-        # (-1,  0)         (1,  0)
-        # (-1, -1) (0, -1) (1, -1)
         directions = [
             (-1,  1), (0,  1), (1,  1),
             (-1,  0),          (1,  0),
@@ -142,8 +142,9 @@ class Board(AbstractBoard):
         return ret
 
     def _get_flippable_discs_in_direction(self, color, x, y, direction):
-        """
-        指定座標から指定方向に向けてひっくり返せる石の場所を返す
+        """_get_flippable_discs_in_direction
+
+               指定座標から指定方向に向けてひっくり返せる石の場所を返す
         """
         ret = []
         next_x, next_y = x, y
@@ -171,8 +172,9 @@ class Board(AbstractBoard):
         return []
 
     def _in_range(self, x, y):
-        """
-        座標がボードの範囲内かどうかを返す
+        """_in_range
+
+               座標がボードの範囲内かどうかを返す
         """
         if 0 <= x < self.size and 0 <= y < self.size:
             return True
@@ -180,41 +182,39 @@ class Board(AbstractBoard):
         return False
 
     def put_disc(self, color, x, y):
+        """put_disc
+
+               指定座標に石を置いて返せる場所をひっくり返し、取れた石の座標を返す
         """
-        指定座標に石を置いて返せる場所をひっくり返し、取れた石の座標を返す
-        """
-        legal_moves = self.get_legal_moves(color, cache=True)
+        if not self._in_range(x, y):
+            return []
 
-        if (x, y) in legal_moves:
-            self._board[y][x] = self.disc[color]  # 指定座標に指定した色の石を置く
-            flippable_discs = legal_moves[(x, y)]
+        flippable_discs = self.get_flippable_discs(color, x, y)
 
-            # ひっくり返せる場所に指定した色の石を変更する
-            for tmp_x, tmp_y, in flippable_discs:
-                self._board[tmp_y][tmp_x] = self.disc[color]
+        # 指定座標に石を置く
+        self._board[y][x] = self.disc[color]
 
-            self._update_score()
+        # ひっくり返せる場所に石を置く
+        for tmp_x, tmp_y, in flippable_discs:
+            self._board[tmp_y][tmp_x] = self.disc[color]
 
-            # 打った手の記録
-            self.prev.append({'color': color, 'x': x, 'y': y, 'flippable_discs': flippable_discs})
+        self.update_score()
 
-            return flippable_discs
+        # 打った手の記録
+        self.prev.append({'color': color, 'x': x, 'y': y, 'flippable_discs': flippable_discs})
 
-        return []
+        return flippable_discs
 
-    def _update_score(self):
-        """
-        スコアを更新する
+    def update_score(self):
+        """update_score
         """
         for color in ('black', 'white'):
             self.score[color] = sum([row.count(self.disc[color]) for row in self._board])
 
     def get_board_info(self):
-        """
-        ボードの情報を返す
+        """get_board_info
         """
         board_info = []
-
         for row in self._board:
             tmp = []
 
@@ -230,12 +230,26 @@ class Board(AbstractBoard):
 
         return board_info
 
-    def undo(self):
+    def get_bitboard_info(self):
+        """get_bitboard_info
         """
-        やり直し
+        size = self.size
+        black_bitboard, white_bitboard = 0, 0
+        put = 1 << size * size - 1
+        for y in range(self.size):
+            for x in range(self.size):
+                if self._board[y][x] == self.disc['black']:
+                    black_bitboard |= put
+                if self._board[y][x] == self.disc['white']:
+                    white_bitboard |= put
+                put >>= 1
+
+        return black_bitboard, white_bitboard
+
+    def undo(self):
+        """undo
         """
         prev = self.prev.pop()
-
         if prev:
             color = prev['color']
             prev_color = 'white' if color == 'black' else 'black'
@@ -247,35 +261,17 @@ class Board(AbstractBoard):
             for prev_x, prev_y in flippable_discs:
                 self._board[prev_y][prev_x] = self.disc[prev_color]
 
-            self._update_score()
+            self.update_score()
 
         self._legal_moves_cache.clear()
 
-    def get_bitboard_info(self):
-        """
-        ビットボードの情報を返す
-        """
-        size = self.size
-        black_bitboard, white_bitboard = 0, 0
-        put = 1 << size * size - 1
-
-        for y in range(self.size):
-            for x in range(self.size):
-                if self._board[y][x] == self.disc['black']:
-                    black_bitboard |= put
-                if self._board[y][x] == self.disc['white']:
-                    white_bitboard |= put
-                put >>= 1
-
-        return black_bitboard, white_bitboard
+        return prev
 
 
 class BitBoard(AbstractBoard):
-    """
-    ボードを管理する(ビットボードによる実装)
+    """BitBoard
     """
     def __init__(self, size=8):
-        # ボードサイズの値チェック
         if not(MIN_BOARD_SIZE <= size <= MAX_BOARD_SIZE and size % 2 == 0):
             raise BoardSizeError(str(size) + ' is invalid size!')
 
@@ -322,13 +318,8 @@ class BitBoard(AbstractBoard):
 
     def __str__(self):
         size = self.size
-
-        # 列の見出し
         header = '   ' + ' '.join([chr(97 + i) for i in range(size)]) + '\n'
-
-        # 行の見出し+盤面
         board = [[self.disc['blank'] for _ in range(size)] for _ in range(size)]
-
         mask = 1 << (size * size - 1)
         for y in range(size):
             for x in range(size):
@@ -352,7 +343,7 @@ class BitBoard(AbstractBoard):
             cache : True if cache use
 
         Returns:
-            legal_moves
+            legal_moves list
         """
         # if cache option is True and cache available, return cache
         if cache and color in self._legal_moves_cache:
@@ -365,26 +356,47 @@ class BitBoard(AbstractBoard):
 
         return ret
 
-    def put_disc(self, color, x, y):
+    def get_flippable_discs(self, color, x, y):
+        """get_flippable_discs
+
+               指定座標のひっくり返せる石の場所をすべて返す
         """
-        指定座標に石を置いて返せる場所をひっくり返し、取れた石の座標を返す
+        player, opponent = (self._black_bitboard, self._white_bitboard) if color == 'black' else (self._white_bitboard, self._black_bitboard)
+
+        return BitBoardMethods.get_flippable_discs(self.size, player, opponent, x, y, self._mask)
+
+    def put_disc(self, color, x, y):
+        """put_disc
+
+               指定座標に石を置いて返せる場所をひっくり返し、取れた石の座標を返す
         """
         return BitBoardMethods.put_disc(self, color, x, y)
 
-    def get_board_info(self):
+    def update_score(self):
+        """update_score
         """
-        ボードの情報を返す
+        self.score['black'], self.score['white'] = 0, 0
+        size = self.size
+        mask = 1 << (size * size - 1)
+        for y in range(size):
+            for x in range(size):
+                if self._black_bitboard & mask:
+                    self.score['black'] += 1
+                elif self._white_bitboard & mask:
+                    self.score['white'] += 1
+                mask >>= 1
+
+    def get_board_info(self):
+        """get_board_info
         """
         return BitBoardMethods.get_board_info(self.size, self._black_bitboard, self._white_bitboard)
 
-    def undo(self):
-        """
-        やり直し
-        """
-        BitBoardMethods.undo(self)
-
     def get_bitboard_info(self):
-        """
-        ビットボードの情報を返す
+        """get_bitboard_info
         """
         return self._black_bitboard, self._white_bitboard
+
+    def undo(self):
+        """undo
+        """
+        return BitBoardMethods.undo(self)

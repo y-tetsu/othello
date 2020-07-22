@@ -3,9 +3,6 @@
 ネガマックス法
 """
 
-import sys
-sys.path.append('../')
-
 import random
 
 from reversi.strategies.common import Timer, Measure, CPU_TIME, AbstractStrategy
@@ -32,7 +29,7 @@ class _NegaMax(AbstractStrategy):
 
         # 打てる手の中から評価値の最も高い手を選ぶ
         legal_moves = board.get_legal_moves(color, cache=True)
-        for move in legal_moves.keys():
+        for move in legal_moves:
             board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)                              # 一手打つ
             score = -self.get_score(next_color, board, self.depth-1)  # 評価値を取得
@@ -58,7 +55,7 @@ class _NegaMax(AbstractStrategy):
         # ゲーム終了 or 最大深さに到達
         legal_moves_b = board.get_legal_moves('black')
         legal_moves_w = board.get_legal_moves('white')
-        is_game_end =  True if not legal_moves_b and not legal_moves_w else False
+        is_game_end = True if not legal_moves_b and not legal_moves_w else False
 
         if is_game_end or depth <= 0:
             sign = 1 if color == 'black' else -1
@@ -73,7 +70,7 @@ class _NegaMax(AbstractStrategy):
 
         # 評価値を算出
         max_score = self._MIN
-        for move in legal_moves.keys():
+        for move in legal_moves:
             board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)
             score = -self.get_score(next_color, board, depth-1)

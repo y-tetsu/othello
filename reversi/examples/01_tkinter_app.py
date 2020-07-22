@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Reversi GUI Application using tkinter
 
     This is a reversi GUI Application using tkinter.
@@ -67,8 +66,8 @@ Reversi(
         'MinMax': strategies.MinMax2_TPW(),
         'NegaMax': strategies.NegaMax3_TPW(),
         'AlphaBeta': strategies.AlphaBeta4_TPW(),
-        'Joseki' : strategies.AlphaBeta4J_TPW(),
-        'FullReading' : strategies.AlphaBeta4F9J_TPW(),
+        'Joseki': strategies.AlphaBeta4J_TPW(),
+        'FullReading': strategies.AlphaBeta4F9J_TPW(),
         'Iterative': strategies.AbIF9J_B_TPW(),
         'Edge': strategies.AbIF9J_B_TPWE(),
     }

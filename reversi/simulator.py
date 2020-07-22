@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-"""
-対戦シミュレーター
+"""Simulator
 """
 
 import os
@@ -16,7 +14,7 @@ class Simulator:
     """
     ゲームをシミュレーションする
     """
-    def __init__(self, strategies, setting_file):
+    def __init__(self, players_info, setting_file):
         if os.path.isfile(setting_file):
             with open(setting_file) as f:
                 setting = json.load(f)
@@ -48,11 +46,11 @@ class Simulator:
         self.random_opening = setting['random_opening']
 
         if 'characters' in setting:
-            black_players = [Player('black', c, strategies[c]) for c in setting['characters']]
-            white_players = [Player('white', c, strategies[c]) for c in setting['characters']]
+            black_players = [Player('black', c, players_info[c]) for c in setting['characters']]
+            white_players = [Player('white', c, players_info[c]) for c in setting['characters']]
         else:
-            black_players = [Player('black', c, strategies[c]) for c in strategies.keys()]
-            white_players = [Player('white', c, strategies[c]) for c in strategies.keys()]
+            black_players = [Player('black', c, players_info[c]) for c in players_info.keys()]
+            white_players = [Player('white', c, players_info[c]) for c in players_info.keys()]
 
         # Adapt Random Opening
         if self.random_opening:

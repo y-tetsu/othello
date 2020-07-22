@@ -3,9 +3,6 @@
 ネガスカウト法
 """
 
-import sys
-sys.path.append('../')
-
 from reversi.strategies.common import Timer, Measure, CPU_TIME
 from reversi.strategies.alphabeta import _AlphaBeta
 from reversi.strategies.coordinator import Evaluator_TPW, Evaluator_TPWE, Evaluator_TPOW
@@ -23,7 +20,7 @@ class _NegaScout(_AlphaBeta):
         # ゲーム終了 or 最大深さに到達
         legal_moves_b = board.get_legal_moves('black')
         legal_moves_w = board.get_legal_moves('white')
-        is_game_end =  True if not legal_moves_b and not legal_moves_w else False
+        is_game_end = True if not legal_moves_b and not legal_moves_w else False
 
         if is_game_end or depth <= 0:
             sign = 1 if color == 'black' else -1
@@ -38,7 +35,7 @@ class _NegaScout(_AlphaBeta):
 
         # NegaScout法
         tmp, null_window = None, beta
-        for i, move in enumerate(legal_moves.keys()):
+        for i, move in enumerate(legal_moves):
             if alpha < beta:
                 board._legal_moves_cache[color] = legal_moves  # recover cache
                 board.put_disc(color, *move)

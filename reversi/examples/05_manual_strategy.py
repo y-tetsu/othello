@@ -1,17 +1,16 @@
-#!/usr/bin/env python
-"""Easy Strategy
+"""Manual Strategy
 
-    This is a example of easy reversi strategy.
+    This is a example of manual reversi strategy.
 """
 
 import random
 from reversi import Reversi, strategies
 
 
-class Easy(strategies.common.AbstractStrategy):
-    """Easy
+class Manual(strategies.common.AbstractStrategy):
+    """Manual
 
-     This is a easy reversi strategy.
+     This is a simple reversi strategy made manually.
      The specification is as following.
         - Preferentially get corners
         - Avoid near corners
@@ -26,7 +25,7 @@ class Easy(strategies.common.AbstractStrategy):
             board (obj) : Board(BitBoard) object
         """
         move = None
-        legal_moves = list(board.get_legal_moves(color, cache=True).keys())
+        legal_moves = board.get_legal_moves(color, cache=True)
         size = board.size
 
         # Preferentially get corners
@@ -40,7 +39,7 @@ class Easy(strategies.common.AbstractStrategy):
             next_moves = [i for i in legal_moves]
             near_corners = [
                              (1, 0),         (size-2, 0),
-                (0, 1),      (1, 1),         (size-2, 1),      (size-1, 1),
+                (0, 1),      (1, 1),         (size-2, 1),      (size-1, 1),  # noqa: E131
 
                 (0, size-2), (1, size-2),    (size-2, size-2), (size-1, size-2),
                              (1, size-1),    (size-2, size-1),
@@ -58,6 +57,6 @@ class Easy(strategies.common.AbstractStrategy):
 if __name__ == '__main__':
     Reversi(
         {
-            'Easy': Easy(),
+            'Manual': Manual(),
         }
     ).start()

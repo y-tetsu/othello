@@ -3,11 +3,7 @@
 アルファベータ法(ネガアルファ法)
 """
 
-import sys
-sys.path.append('../')
-
 from reversi.strategies.common import Timer, Measure, CPU_TIME, AbstractStrategy
-from reversi.strategies.negamax import NegaMax
 from reversi.strategies.coordinator import Evaluator_TPW, Evaluator_TPWE, Evaluator_TPWEC, Evaluator_N
 
 
@@ -27,7 +23,7 @@ class _AlphaBeta(AbstractStrategy):
         """
         次の一手
         """
-        moves = board.get_legal_moves(color, cache=True).keys()  # 手の候補
+        moves = board.get_legal_moves(color, cache=True)  # 手の候補
         best_move, _ = self.get_best_move(color, board, moves, self.depth)
 
         return best_move
@@ -74,7 +70,7 @@ class _AlphaBeta(AbstractStrategy):
         # ゲーム終了 or 最大深さに到達
         legal_moves_b = board.get_legal_moves('black')
         legal_moves_w = board.get_legal_moves('white')
-        is_game_end =  True if not legal_moves_b and not legal_moves_w else False
+        is_game_end = True if not legal_moves_b and not legal_moves_w else False
 
         if is_game_end or depth <= 0:
             sign = 1 if color == 'black' else -1
@@ -88,7 +84,7 @@ class _AlphaBeta(AbstractStrategy):
             return -self._get_score(next_color, board, -beta, -alpha, depth)
 
         # 評価値を算出
-        for move in legal_moves.keys():
+        for move in legal_moves:
             board._legal_moves_cache[color] = legal_moves  # recover cache
             board.put_disc(color, *move)
             score = -self._get_score(next_color, board, -beta, -alpha, depth-1)

@@ -7,7 +7,7 @@ from random import randint, choices
 
 POPULATIONS_CLASSES = 6
 POPULATIONS_NUM = 12
-GENERATION = 200
+GENERATION = 600
 
 
 if __name__ == '__main__':
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         print('    num', cls_num)
 
         # load json
-        with open('./2nd/populations' + str(cls_num) + '/population.json') as f:
+        with open('./3rd/populations' + str(cls_num) + '/population.json') as f:
             setting = json.load(f)
 
         # select population by roulette

@@ -85,9 +85,9 @@ $ py -3.7 09_genetic_algorithm.py
 
 
 ### アプリケーションの起動
-まず最初に、リバーシのGUIアプリケーションの起動方法を示します。
+まず最初に、リバーシのGUIアプリケーションを起動する方法を示します。
 
-Pythonコード内で`reversi`ライブラリより`Reversi`クラスをインポートしてください。
+Pythonコード内で**reversi**より`Reversi`クラスをインポートしてください。
 `Reversi`クラスのインスタンスを作成し、`start`メソッドを呼び出すとアプリケーションが起動します。
 
 ```Python
@@ -102,10 +102,12 @@ Reversi().start()
 ### アプリケーションにAIを追加する
 次はアプリケーションにAIを追加する方法を示します。
 
-`Reversi`クラスのインスタンス作成時の引数に、辞書(`dict`)型のAIプレイヤーの情報を指定することで、
-自動でリバーシをプレイするAIプレイヤーを追加することができます。(以後、"プレイヤー情報"と呼びます)
+`Reversi`クラスのインスタンス作成時の引数に、
+辞書(`dict`)型のAIプレイヤーの情報(以後、"プレイヤー情報"と呼びます)を指定することで、
+リバーシを自動でプレイするAIプレイヤーを追加することができます。
 
-"プレイヤー情報"は、キーに"AIプレイヤーの名前"(任意)、値に"AI戦略クラスのオブジェクト"、としたペアの情報を集めたものとなります。
+"プレイヤー情報"は、キーに"AIプレイヤーの名前"(任意)、値に"AI戦略クラスのオブジェクト"、
+としたペアの情報を集めたものとなります。
 
 ```Python
 {
@@ -135,7 +137,7 @@ Reversi(
 
 
 ### AI戦略を自作する
-続いて、本ライブラリを使って、独自のAIを自作しアプリケーションに追加する方法を示します。
+続いて、本ライブラリを使って独自のAIを自作(プログラミング)し、アプリケーションに追加する方法を示します。
 
 
 #### 戦略クラスの作り方
@@ -148,19 +150,20 @@ from reversi.strategies import AbstractStrategy
 
 class OriginalAI(AbstractStrategy):
     def next_move(self, color, board):
-        move = ### 次の一手 ###
+        move = (X, Y)  ### 次の一手 ###
 
         return move
 ```
 
 このようにすることで、AI戦略クラスが完成します。
+完成したAI戦略クラスをインスタンス化し"プレイヤー情報に指定することで、ゲームに参加させることができます。
 
 `next_move`メソッドは下記の、`color`変数と`board`オブジェクトを引数として受け取ります。
 
  |引数|説明|
  |:---|:---|
  |`color`変数|`black`か`white`の`str`型の文字列が入り、それぞれ黒番か白番かを判別することができます。|
- |`board`オブジェクト|リバーシの盤面情報を持ったオブジェクトです。黒と白の石の配置情報の他、リバーシのゲームを進行するために必要となる、パラメータやメソッドを持っています。|
+ |`board`オブジェクト|リバーシの盤面情報を持ったオブジェクトです。黒と白の石の配置情報のほか、リバーシのゲームを進行するために必要となる、パラメータやメソッドを持っています。|
 
 `next_move`の戻り値には、手番と盤面の情報を元に"次に打つ手の座標"を指定してください。
 座標を決定する方法が、自作の必要な部分となります。
@@ -243,12 +246,14 @@ from reversi import Simulator
 シミュレータは必ずメインモジュール(\_\_main\_\_)内で実行するようにしてください。
 Simulatorをインスタンス化する際の引数には"プレイヤー情報"と"設定ファイル名"の2つが必要となります。
 
-"プレイヤー情報"はアプリケーションの起動で指定したものと同様です。
+"プレイヤー情報"については先のアプリケーションの起動で指定したものと同様です。
 また、シミュレータの設定ファイルについては後述します。
 
 下記のとおり、シミュレータオブジェクトから`start`メソッドを呼ぶとシミュレーションを開始します。
 
 ```Python
+from reversi import Simulator
+
 if __name__ == '__main__':
     simulator = Simulator(
         {
@@ -263,7 +268,7 @@ if __name__ == '__main__':
 
 #### シミュレータの設定ファイル
 シミュレータの設定ファイル(JSON形式)の作成例は下記のとおりです。
-Simulatorの第二引数に、本ファイル名(任意。上記例では`./simulator_setting.json`)を指定してください。
+Simulatorの第二引数に、本ファイル名(上記例では`./simulator_setting.json`ですが任意)を指定してください。
 
 ```JSON
 {
@@ -283,7 +288,7 @@ Simulatorの第二引数に、本ファイル名(任意。上記例では`./simu
  |パラメータ名|説明|
  |:---|:---|
  |board_size|盤面のサイズを指定してください。|
- |board_type|盤面の種類(board または bitboard)を選択してください。bitboardの方が高速で通常は変更不要です。|
+ |board_type|盤面の種類(board または bitboard)を選択してください。bitboardの方が高速で通常はこちらを使用してください。|
  |matches|AI同士の対戦回数を指定してください。100を指定した場合、AIの各組み合わせにつき先手と後手で100試合ずつ対戦する動作となります。|
  |processes|並列実行数を指定してください。AI同士の対戦組み合わせ別に並列実行します。お使いのPCのコア数に合わせて必要に応じて設定してください。|
  |random_opening|対戦開始からランダムに打つ手数を指定してください。指定された手数まではランダムに試合を進行します。不要な場合は0を指定してください。|
@@ -350,6 +355,155 @@ CORNER                    |  72.2% |   289   102     9   400
 ```
 
 ランダムに打つよりも毎回多めに取る方が、さらにそれよりも角は必ず取る方が、より有利になりそうだという結果が得られました。
+
+
+### boardオブジェクトの使い方
+ここでは、リバーシの盤面を管理する`board`オブジェクトの使い方について説明します。
+
+#### boardオブジェクトの生成
+`board`オブジェクトは**reversi**より、`Board`クラスまたは`BitBoard`クラスを
+インポートすることで、生成できるようになります。
+
+`Board`クラスと`BitBoard`クラスの違いは、盤面を表現する内部データの構造のみで、使い方は同じです。
+`BitBoard`クラスの方が処理速度がより高速なため、通常はこちらをご使用下さい。
+
+`board`オブジェクトをインスタンス化する際の引数に、数値を入れることで盤面のサイズを指定できます。
+サイズは4～26までの偶数としてください。省略時は8となります。
+また、`size`プロパティにて盤面のサイズを確認することができます。
+
+コーディング例は下記のとおりです。
+
+```Python
+from reversi import Board, BitBoard
+
+board = Board()
+print(board.size)
+
+bitboard = BitBoard(10)
+print(bitboard.size)
+```
+
+上記の実行結果は下記となります。
+```
+8
+10
+```
+
+#### boardオブジェクトの標準出力
+`board`オブジェクトを`print`すると盤面の状態が標準出力されます。
+
+```Python
+from reversi import BitBoard
+
+board = BitBoard()
+print(board)
+
+board = BitBoard(4)
+print(board)
+```
+
+上記の実行結果は下記となります。<br>
+![board_print](https://raw.githubusercontent.com/y-tetsu/reversi/images/board_print.png)
+
+#### boardオブジェクトのメソッド
+`board`オブジェクトの使用可能なメソッドを紹介します。
+
+##### get_legal_moves
+黒番または白番での着手可能な位置を返します。
+着手可能な位置は"XY座標のタプルのリスト"となります。
+引数には`black`(黒番)または`white`(白番)の文字列(以後`color`と呼びます)を指定してください。
+
+```Python
+from reversi import BitBoard
+
+board = BitBoard()
+legal_moves = board.get_legal_moves('black')
+
+print(legal_moves)
+```
+
+上記の実行結果は下記となります。
+```
+[(3, 2), (2, 3), (5, 4), (4, 5)]
+```
+この場合、下図の黄色のマスの位置が、着手可能な位置として返されます。<br>
+![legal_moves](https://raw.githubusercontent.com/y-tetsu/reversi/images/legal_moves.png)
+
+##### get_flippable_discs
+指定位置に着手した場合の、ひっくり返せる石を返します。
+ひっくり返せる石は"XY座標のタプルのリスト"となります。
+第一引数に`color`、第二引数に石を置くX座標、第三引数にY座標を指定してください。
+
+```Python
+from reversi import BitBoard
+
+board = BitBoard()
+flippable_discs = board.get_flippable_discs('black', 5, 4)
+
+print(flippable_discs)
+```
+
+上記の実行結果は下記となります。
+```
+[(4, 4)]
+```
+この場合、下図の黄色のマスの位置が、ひっくり返せる石の位置として返されます。<br>
+![flippable_discs](https://raw.githubusercontent.com/y-tetsu/reversi/images/flippable_discs.png)
+
+##### get_board_info
+盤面に置かれた石の状態を"2次元リスト"で返します。
+"1"が黒、"-1"が白、"0"が空きを表します。引数はありません。
+
+```Python
+from pprint import pprint
+from reversi import BitBoard
+
+board = BitBoard()
+board_info = board.get_board_info()
+
+print(board)
+pprint(board_info)
+```
+
+上記の実行結果は下記となります。<br>
+![get_board_info](https://raw.githubusercontent.com/y-tetsu/reversi/images/get_board_info.png)
+
+##### put_disc
+指定位置に石を配置し、取れる石をひっくり返します。
+第一引数に`color`、第二引数に石を置くX座標、第三引数にY座標を指定してください。
+
+```Python
+from reversi import BitBoard
+
+board = BitBoard()
+print(board)
+
+board.put_disc('black', 5, 4)
+print(board)
+```
+
+上記の実行結果は下記となります。<br>
+![put_disc](https://raw.githubusercontent.com/y-tetsu/reversi/images/put_disc.png)
+
+##### undo
+`put_disc`メソッドで置いた石を元に戻します。引数はありません。
+`put_disc`メソッドを呼び出した回数だけ、元に戻すことができます。
+`put_disc`メソッドを呼び出した回数を超えて、本メソッドを呼び出さないでください。
+
+```Python
+from reversi import BitBoard
+
+board = BitBoard()
+board.put_disc('black', 5, 4)
+print(board)
+
+board.undo()
+print(board)
+```
+
+上記の実行結果は下記となります。<br>
+![undo](https://raw.githubusercontent.com/y-tetsu/reversi/images/undo.png)
+
 
 ---
 ## GUIアプリケーション(01_tkinter_app.py)の説明
@@ -560,6 +714,7 @@ C:\Users\{あなたのユーザ名}\AppData\Local\Programs\Python\Python37\Scrip
 - 「Java言語で学ぶデザインパターン入門」 結城 浩著 ソフトバンククリエイティブ株式会社 [ISBN4-7973-2703-0](https://www.hyuki.com/dp/)
 - 「日経ソフトウェア2019年11月号」 日経BP [ISSN1347-4685](https://books.google.co.jp/books?id=qhCxDwAAQBAJ&pg=PA146&lpg=PA146&dq=ISSN1347-4685&source=bl&ots=_3Z0k4Y_WE&sig=ACfU3U1urxBdw_srrg62Kr5UJD1sXLEQbQ&hl=ja&sa=X&ved=2ahUKEwjlkqzArY_nAhVTc3AKHXlBA6YQ6AEwAHoECAkQAQ#v=onepage&q=ISSN1347-4685&f=false)
 - 「Python計算機科学新教本」 David Kopec著 黒川 利明訳 株式会社オライリー・ジャパン [ISBN978-4-87311-881-9](https://www.oreilly.co.jp/books/9784873118819/)
+- 「Cython Cとの融合によるPythonの高速化」 Krurt W. Smith著 中田 秀基監訳 長尾 高弘訳 株式会社オライリー・ジャパン [ISBN978-4-87311-727-0](https://www.oreilly.co.jp/books/9784873117270/)
 
 ## 参考サイト
 - 「オセロ・リバーシプログラミング講座 ～勝ち方・考え方～」https://uguisu.skr.jp/othello/

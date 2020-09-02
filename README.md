@@ -128,6 +128,6 @@ Tableパラメータ(corner, c, a1, a2, b1, b2, b3, x, o1, o2)+着手可能数�
 ```
 
 ### 結果
-200世代ほどから勝率60%を超える個体が現れ、複数手読みの戦略にパラメータを適用しても同程度に強かったため採用。<br>
+200世代ほどから勝率60%を超える個体が現れ、複数手読みの戦略にパラメータを適用しても既存より強かったため採用。<br>
 
 ![switch2f9j_tpwe2](https://raw.githubusercontent.com/y-tetsu/reversi/images/switch2f9j_tpwe2.png)

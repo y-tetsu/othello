@@ -28,7 +28,8 @@ Tableパラメータ(corner, c, a1, a2, b, o, x)より強くなるパラメー�
 
 ### 結果
 3回目の試行の1500世代あたりで79%程度の勝率となる個体が現れたが
-複数手を読む戦略にパラメータを適用したところ弱くなったため中断。
+複数手を読む戦略にパラメータを適用したところ弱くなったため中断。<br>
+
 ![switch_t](https://raw.githubusercontent.com/y-tetsu/reversi/images/switch_t.png)
 
 ## switch2_tw
@@ -58,7 +59,8 @@ Tableパラメータ(corner, c, a1, a2, b, o, x)+勝敗パラメータ(ww)より
 ```
 
 ### 結果
-200世代ほど繰り返すも勝率が20%からあがる気配がなく中断。
+200世代ほど繰り返すも勝率が20%からあがる気配がなく中断。<br>
+
 ![switch2_tw](https://raw.githubusercontent.com/y-tetsu/reversi/images/switch2_tw.png)
 
 ## switch2f9j_tpwe(1)
@@ -94,7 +96,8 @@ Tableパラメータ(corner, c, a1, a2, b1, b2, b3, x, o1, o2)+着手可能数�
 ```
 
 ### 結果
-1200世代分ほど繰り返すも勝率が40%程度からあがる気配がなく中断。
+1200世代分ほど繰り返すも勝率が40%程度からあがる気配がなく中断。<br>
+
 ![switch2f9j_tpwe1](https://raw.githubusercontent.com/y-tetsu/reversi/images/switch2f9j_tpwe1.png)
 
 ## switch2f9j_tpwe(2)
@@ -125,5 +128,6 @@ Tableパラメータ(corner, c, a1, a2, b1, b2, b3, x, o1, o2)+着手可能数�
 ```
 
 ### 結果
-200世代ほどから勝率60%を超える個体が現れ、複数手読みの戦略にパラメータを適用しても同程度に強かったため採用。
+200世代ほどから勝率60%を超える個体が現れ、複数手読みの戦略にパラメータを適用しても同程度に強かったため採用。<br>
+
 ![switch2f9j_tpwe2](https://raw.githubusercontent.com/y-tetsu/reversi/images/switch2f9j_tpwe2.png)
